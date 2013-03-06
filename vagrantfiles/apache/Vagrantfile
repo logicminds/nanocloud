@@ -1,0 +1,36 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+@box_url="http://puppet-vagrant-boxes.puppetlabs.com"
+
+Vagrant::Config.run do |config|
+  # All Vagrant configuration is done here. The most common configuration
+  # options are documented and commented below. For a complete reference,
+  # please see the online documentation at vagrantup.com.
+
+  # Every Vagrant virtual environment requires a box to build off of.
+  config.vm.box = "ubuntu12LTS"
+  config.ssh.private_key_path = "../../vagrant"
+  # The url from where the 'config.vm.box' box will be fetched if it
+  # doesn't already exist on the user's system.
+  config.vm.box_url = "#{@box_url}/ubuntu-server-1204-x64.box"
+
+  # Boot with a GUI so you can see the screen. (Default is headless)
+  #config.vm.boot_mode = :gui
+
+  # Enable provisioning with Puppet stand alone.  Puppet manifests
+  # are contained in a directory path relative to this Vagrantfile.
+  # You will need to create the manifests directory and a manifest in
+  # the file centos.pp in the manifests_path directory.
+  
+ 
+  config.vm.define :apache do |apache_config|
+    apache_config.vm.host_name = "apache"
+    apache_config.vm.forward_port 80, 8081
+    apache_config.vm.provision :puppet do |puppet|
+      puppet.module_path = "../../puppetmodules"
+      puppet.manifests_path = "../../manifests"
+      puppet.facter = { "type" => "apache" }
+    end
+  end
+
+end

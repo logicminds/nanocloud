@@ -1,0 +1,60 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+@box_url="http://puppet-vagrant-boxes.puppetlabs.com"
+
+Vagrant::Config.run do |config|
+  # All Vagrant configuration is done here. The most common configuration
+  # options are documented and commented below. For a complete reference,
+  # please see the online documentation at vagrantup.com.
+
+  # Every Vagrant virtual environment requires a box to build off of.
+
+  # The url from where the 'config.vm.box' box will be fetched if it
+  # doesn't already exist on the user's system.
+  config.vm.box_url = "#{@box_url}/centos-63-x64.box"
+  config.vm.box = "centos63"
+  config.ssh.private_key_path = "../../vagrant"
+
+  # Boot with a GUI so you can see the screen. (Default is headless)
+  config.vm.boot_mode = :gui
+
+  # Enable provisioning with Puppet stand alone.  Puppet manifests
+  # are contained in a directory path relative to this Vagrantfile.
+  # You will need to create the manifests directory and a manifest in
+  # the file centos.pp in the manifests_path directory.
+  #
+ 
+  (1..2).each do |i|
+    vmname = "nginxweb#{i}"
+    config.vm.define vmname.to_sym do |web_conf|
+      web_conf.vm.host_name = vmname
+      web_conf.vm.network :hostonly, "33.33.66.#{i+100}"
+      web_conf.vm.customize ["modifyvm", :id, "--memory", "512"]
+      web_conf.vm.customize ["modifyvm", :id, "--name", vmname]
+      web_conf.vm.provision :puppet do |puppet|
+        puppet.module_path = "../../puppetmodules"
+        puppet.manifests_path = "../../manifests"
+        puppet.facter = { "type" => "web" }
+      end
+    end
+  end
+
+  config.vm.define :webproxy do |webproxy_config|
+    webproxy_config.vm.host_name = "webproxy"
+    webproxy_config.vm.provision :puppet do |puppet|
+      puppet.module_path = "puppetmodules"
+      puppet.facter = { "type" => "webproxy" }
+    end
+  end
+  
+  
+  config.vm.define :tc1 do |tc_config|
+    tc_config.vm.host_name = "tc1"
+    tc_config.vm.customize ["modifyvm", :id, "--name", "tomcat1"]
+    tc_config.vm.provision :puppet do |puppet|
+      puppet.module_path = "puppetmodules"
+      puppet.facter = { "type" => "tomcat" }
+    end
+  end
+
+end
